@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>用户信息</title>
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/bootstrap.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/nprogress.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/style.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/font-awesome.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/layui/css/layui.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/login/index.css}">
+    <style type="text/css">
+        .disasterModelDiv{
+            float: left;
+            border: 1px solid #EAEAEA;
+            width: 75%;
+        }
+        div.chuans{
+            position:relative;
+            width: 200px;
+            height:200px;
+            border-radius: 3px;
+            border:1px dashed #ccc;
+            margin-right: 44px;
+            overflow: hidden;
+            margin-left: 30px;
+            float: left;
+        }
+        div.chuans img{
+            position:absolute;
+            max-width:238px;
+            left:0;
+            right:0;
+            top:0;
+            bottom:0;
+            margin:auto;
+        }
+        input.uploadImg{
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            z-index: 999;
+            cursor: pointer;
+        }
+    </style>
+
+    <script th:src="@{/static/otherStatic/jquery/jquery-3.4.1.min.js}"></script>
+    <script th:src="@{/static/otherStatic/pagemould/js/bootstrap.min.js}"></script>
+    <script th:src="@{/static/otherStatic/layui/layui.js}"></script>
+
+    <script type="text/javascript">
+        function initDisasterList(nextPage,key) {
+            if(nextPage!=0) {
+                $.ajax({
+                    url:"/disaster/findAllUserDisaster",
+                    type:"post",
+                    data:{"key":key,"pageNum":nextPage,"userid":[[${session.userinfo.userid}]]},
+                    success:function (result) {
+                        if(result.code==200) {
+                            if(result.data.pageInfo.pageNum==1){
+                                $("#disasterList").empty();
+                            }
+                            $.each(result.data.pageInfo.list, function (index, disaster) {
+                                $("#disasterList").append('<article class="excerpt" style="">\n' +
+                                    '                <a class="focus" href="/disaster/jumpDisasterInfo?id=' + disaster.disasterid + '" title="' + disaster.name + '" target="_blank" ><img class="thumb" data-original="' + disaster.photo + '" src="' + disaster.photo + '" alt="' + disaster.name + '"  style="display: inline;"></a>\n' +
+                                    '                <header><a class="cat" href="/disaster/jumpDisasterInfo?id=' + disaster.disasterid + '" title="'+disaster.type+'" >'+disaster.type+'<i></i></a>\n' +
+                                    '                    <h2><a href="/disaster/jumpDisasterInfo?id=' + disaster.disasterid + '" title="' + disaster.name + '" target="_blank" >' + disaster.name + '</a>\n' +
+                                    '                    </h2>\n' +
+                                    '                </header>\n' +
+                                    '                <p class="meta">\n' +
+                                    '                    <time class="time"><i class="glyphicon glyphicon-time"></i> ' + disaster.time + '</time>\n' +
+                                    '                    <span class="views"><i class="glyphicon glyphicon-eye-open"></i> ' + disaster.hot + '</span> <a class="comment" href="/disaster/jumpDisasterInfo?id=' + disaster.disasterid + '" title="评论" target="_blank" ><i class="glyphicon glyphicon-comment"></i> 虚空评论</a>\n' +
+                                    '                </p>\n' +
+                                    '                <p class="note">' + disaster.sysnopsis + '</p>\n' +
+                                    '            </article>');
+                            });
+
+                        }
+                    }
+                });
+            }else{
+                $("#disasterList").append("<h5>没有数据。。。</h5>");
+            }
+
+        }
+
+        // function isAuing(){
+        //     $.ajax({
+        //         url:"/userAuthentication/findAuUser",
+        //         type:"post",
+        //         data:{"userid":${sessionScope.userinfo.userid}},
+        //         success:function (result) {
+        //             if(result.code==200){
+        //                 if(result.data.userAu.isPass=="N"){//如果审核没有通过
+        //                     $("#personalAuthenticationForm").empty();
+        //                     $("#governmentAuthenticationForm").empty();
+        //                     $("#newsAuthenticationForm").empty();
+        //                     if(result.data.userAu.type=="个人认证"){
+        //                         $("#personalAuthenticationForm").append("<p style='color: red'>申请成功，正在审核，请等待</p>")
+        //                         $("#governmentAuthenticationForm").append("<p style='color: red'>正在进行个人身份认证，请等待</p>")
+        //                         $("#newsAuthenticationForm").append("<p style='color: red'>正在进行个人身份认证，请等待</p>")
+        //                     }else if(result.data.userAu.type=="政府认证"){
+        //                         $("#personalAuthenticationForm").append("<p style='color: red'>正在进行政府身份认证，请等待</p>")
+        //                         $("#governmentAuthenticationForm").append("<p style='color: red'>申请成功，正在审核，请等待</p>")
+        //                         $("#newsAuthenticationForm").append("<p style='color: red'>正在进行政府身份认证，请等待</p>")
+        //                     }else if(result.data.userAu.type=="新闻认证"){
+        //                         $("#personalAuthenticationForm").append("<p style='color: red'>正在进行新闻身份认证，请等待</p>")
+        //                         $("#governmentAuthenticationForm").append("<p style='color: red'>正在进行新闻身份认证，请等待</p>")
+        //                         $("#newsAuthenticationForm").append("<p style='color: red'>申请成功，正在审核，请等待</p>")
+        //                     }else{
+        //
+        //                     }
+        //                 }else{
+        //                     if(result.data.userAu.type=="个人认证"){
+        //                         $("#personalAuthenticationForm").empty();
+        //                         $("#personalAuthenticationForm").append("<p style='color: red'>您已通过个人身份验证</p>")
+        //                     }else if(result.data.userAu.type=="政府认证"){
+        //                         $("#governmentAuthenticationForm").empty();
+        //                         $("#newsAuthenticationForm").append("<p style='color: red'>您已通过政府身份验证</p>")
+        //                     }else if(result.data.userAu.type=="新闻认证"){
+        //                         $("#newsAuthenticationForm").empty();
+        //                         $("#newsAuthenticationForm").append("<p style='color: red'>您已通过新闻身份验证</p>")
+        //                     }else{
+        //
+        //                     }
+        //                 }
+        //
+        //             }
+        //         }
+        //     });
+        // }
+
+        $(function () {
+
+
+            //个人信息菜单
+            $("#moreMune").click(function () {
+                $(this).find("dl").addClass("layui-show");
+            });
+            $("#moreMune dl").mouseleave(function () {
+                $("#moreMune").find("dl").removeClass("layui-show");
+            });
+
+
+            //上传图片显示在img中
+            $("#IDphotoPhoto").change(function () {
+                var reads = new FileReader();
+                var f = $(this).get(0).files[0];
+                var rep = /jpeg|png|gif|bmp/ig;
+                var gstyle = f.type.split("/")[1];
+                if(rep.test(gstyle)){
+                    reads.readAsDataURL(f);
+                    var that = this;
+                    reads.onload = function(e) {
+                        $(that).parent().find("img").attr("src",this.result);
+                    };
+                }else{
+                    layer.msg("图片格式不正确，请上传 jpeg|png|gif|bmp 格式的图片")
+                }
+                return false;
+            });
+
+            //个人验证表单提交
+            $("#personalAuthenticationBtn").click(function () {
+                var formData=new FormData();
+
+                formData.append("userid",$("#personalAuthenticationForm input[name=userid]").val());
+                formData.append("realname",$("#personalAuthenticationForm input[name=realname]").val());
+                formData.append("IDnumber",$("#personalAuthenticationForm input[name=IDnumber]").val());
+                formData.append("photo",$("#personalAuthenticationForm input[name=photo]").get(0).files[0]);
+
+                $.ajax({
+                    url:"/userAu/personalAu",
+                    type:"post",
+                    data:formData,
+                    //dataType: 'json', //返回值类型 一般设置为json
+                    contentType: false,
+                    processData: false,  // jQuery不要去处理发送的数据
+                    success:function(result){
+                        if(result.code==200){
+                            alert("提交成功，请等待审核!");
+                            window.location.href="/user//jumpUserInfo/4";
+                            //$("#personalAuthenticationForm").append("<p style='color: red'>申请成功，正在审核，请等待</p>")
+
+                        }
+                        return false;
+                    },error:function(){
+                        console.log("后台处理错误");
+                    }
+                });
+                return false
+            });
+
+        });
+    </script>
+
+</head>
+<body>
+<div th:insert="model::copyTop"></div>
+<section class="container">
+
+    <div class="content-wrap">
+        <aside class="sidebar" style="margin-left: 0px;width: 250px">
+            <div class="widget widget_hot">
+                <h3>个人信息</h3>
+                <ul>
+                    <li><h2>
+                        <a style="font-size: 13px;padding-left: 15px" th:href="@{/user/jumpUserInfo/1}">个人资料</a>
+                    </h2></li>
+                    <li><h2>
+                        <a style="font-size: 13px;padding-left: 15px" th:href="@{/user/jumpUserInfo/2}">安全设置</a>
+                    </h2></li>
+                    <li><h2>
+                        <a style="font-size: 13px;padding-left: 15px" th:href="@{/user/jumpUserInfo/3}">特殊设置</a>
+                    </h2></li>
+                </ul>
+                <h3>身份认证</h3>
+                <ul>
+                    <li><h2>
+                        <a style="font-size: 13px;padding-left: 15px" th:href="@{/user/jumpUserInfo/4}">个人认证</a>
+                    </h2></li>
+                    <li><h2>
+                        <a style="font-size: 13px;padding-left: 15px" th:href="@{/user/jumpUserInfo/5}">政府认证</a>
+                    </h2></li>
+                    <li><h2>
+                        <a style="font-size: 13px;padding-left: 15px" th:href="@{/user/jumpUserInfo/6}">新闻认证</a>
+                    </h2></li>
+                </ul>
+                <h3 th:if="${session.userinfo.role.roleid==4}">灾情信息</h3>
+                <ul th:if="${session.userinfo.role.roleid==4}">
+                    <li><h2>
+                        <a style="font-size: 13px;padding-left: 15px" th:href="@{/user/jumpUserInfo/7}">灾情列表</a>
+                    </h2></li>
+                </ul>
+                <h3 th:if="${session.userinfo.role.roleid==3}">新闻信息</h3>
+                <ul th:if="${session.userinfo.role.roleid==3}">
+                    <li><h2>
+                        <a style="font-size: 13px;padding-left: 15px" th:href="@{/user/jumpUserInfo/8}">新闻列表</a>
+                    </h2></li>
+                </ul>
+            </div>
+            <div class="widget widget_sentence">
+                <h3>友情链接</h3>
+                <div class="widget-sentence-link">
+                    <a href="#" title="网站建设" target="_blank">网站建设</a>&nbsp;&nbsp;&nbsp;
+                </div>
+            </div>
+        </aside>
+        <div th:switch="${tabs}" class="content" style="margin-left: 250px;margin-right: 0px">
+            <article th:case="1" class="excerpt-minic excerpt-minic-index">
+                <h2><a href="javascript:void(0);" title="个人资料">个人资料：</a></h2>
+                <form class="layui-form" action="">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">账号</label>
+                        <label th:text="${session.userinfo.username}" class="layui-form-label"></label>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">用户名</label>
+                        <div class="layui-input-block">
+                            <input th:value="${session.userinfo.virtualname}" type="text" name="title" required  lay-verify="required" placeholder="输入用户名" autocomplete="off" class="layui-input" style="width: 40%">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">头像</label>
+                        <div class="chuans">
+                            <img th:src="@{${session.userinfo.photo}}" alt="" onerror="this.src='/static/myStatic/img/IDPhoto.png'">
+                            <input class="uploadImg file1" type="file" name="photo"  >
+                        </div>
+                        <div class="layui-form-mid layui-word-aux" >点击图片可直接修改头像</div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="">保存</button>
+                            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                        </div>
+                    </div>
+                </form>
+            </article>
+            <article th:case="2" class="excerpt-minic excerpt-minic-index">
+                <h2><a href="javascript:void(0);" title="用DTcms做一个独立博客网站（响应式模板）">安全设置：</a>
+                </h2>
+                <hr>
+                <h3 style="color: #888;font-size: 20px;margin-left: 15px;margin-bottom: 20px;">修改密码</h3>
+                <div class="layui-form-item">
+                    <form class="layui-form" action="">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" style="width: 100px">输入原密码</label>
+                            <div class="layui-input-inline">
+                                <input type="password" name="password" required lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input">
+                            </div>
+                            <div class="layui-form-mid layui-word-aux">辅助文字</div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" style="width: 100px">输入新密码</label>
+                            <div class="layui-input-inline">
+                                <input type="password" name="password" required lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input">
+                            </div>
+                            <div class="layui-form-mid layui-word-aux">辅助文字</div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" style="width: 100px">确认新密码</label>
+                            <div class="layui-input-inline">
+                                <input type="password" name="password" required lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input">
+                            </div>
+                            <div class="layui-form-mid layui-word-aux">辅助文字</div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn layui-btn-normal" lay-submit lay-filter="formDemo">修改</button>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+                <hr>
+                <h3 style="color: #888;font-size: 20px;margin-left: 15px;margin-bottom: 20px;">修改手机号</h3>
+                <div class="layui-form-item">
+                    <form class="layui-form" action="">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" style="width: 120px">输入原手机号</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="password" required lay-verify="required" placeholder="请输入手机号" autocomplete="off" class="layui-input">
+                            </div>
+                            <div class="layui-form-mid layui-word-aux"></div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" style="width: 120px">输入验证码</label>
+                            <div class="layui-input-inline" style="width: 120px">
+                                <input type="text" name="password" required lay-verify="required" placeholder="验证码" autocomplete="off" class="layui-input">
+                            </div>
+                            <div class="layui-form-mid layui-word-aux" style="padding: 0 !important;"><button class="layui-btn layui-btn-normal">获取验证码</button></div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn layui-btn-normal" lay-submit lay-filter="formDemo">提交</button>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" style="width: 120px">输入新手机号</label>
+                            <div class="layui-input-inline">
+                                <input type="text" name="password" required lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input">
+                            </div>
+                            <div class="layui-form-mid layui-word-aux"></div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" style="width: 120px">输入验证码</label>
+                            <div class="layui-input-inline" style="width: 120px">
+                                <input type="text" name="password" required lay-verify="required" placeholder="验证码" autocomplete="off" class="layui-input">
+                            </div>
+                            <div class="layui-form-mid layui-word-aux" style="padding: 0 !important;"><button class="layui-btn layui-btn-normal">获取验证码</button></div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn layui-btn-normal" lay-submit lay-filter="formDemo">提交</button>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </article>
+            <article th:case="3" class="excerpt-minic excerpt-minic-index">
+                <h2><a href="javascript:void(0);" title="用DTcms做一个独立博客网站（响应式模板）">特殊设置：</a>
+                </h2>
+                <p class="note" style="color: red">您不能进行特殊设置</p>
+            </article>
+            <article th:case="4" class="excerpt-minic excerpt-minic-index" style="min-height: 500px">
+                <h2><a href="javascript:void(0);" title="用DTcms做一个独立博客网站（响应式模板）">个人认证：</a>
+                </h2>
+                <p th:if="${session.userinfo.role.roleid==2}" style="color: red">您已经认证了个人身份</p>
+                <div th:if="${userAuInfo!=null}">
+                <p th:if="${userAuInfo.role.roleid==2}" style='color: red'>已申请个人身份认证，请等待管理员审核</p>
+                <p th:if="${session.userinfo.role.roleid!=2 && userAuInfo.role.roleid!=2}"style="color: red">正在申请其他认证，请等待其他认证审核结束</p>
+                </div>
+                <div th:if="${userAuInfo==null && session.userinfo.role.roleid<2}">
+                <p style="margin-bottom: 30px;margin-left: 20px">提示：<b>该模块将认证您的真实身份信息，请正确填写，如有意外，概不负责</b></p>
+                <form id="personalAuthenticationForm" class="layui-form">
+                    <input style="display: none" type="text" name="userid" th:value="${session.userinfo.userid}">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">账户</label>
+                        <label th:text="${session.userinfo.username}" class="layui-form-label"></label>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">身份证号</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="IDnumber" required lay-verify="required" placeholder="身份证" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">真实姓名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="realname" required lay-verify="required" placeholder="姓名" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">身份证照片</label>
+                        <div class="chuans">
+                            <img src="/static/myStatic/img/IDPhoto.png" alt="" data-imgsrc="/static/myStatic/img/IDPhoto.png">
+                            <input id="IDphotoPhoto" class="uploadImg file1" type="file" name="photo"  >
+                        </div>
+                        <div class="layui-form-mid layui-word-aux" >点图片上传</div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button id="personalAuthenticationBtn" type="submit" class="layui-btn layui-btn-normal">提交</button>
+                            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                        </div>
+                    </div>
+                </form>
+                </div>
+            </article>
+            <article th:case="5" class="excerpt-minic excerpt-minic-index">
+                <h2><a href="javascript:void(0);" title="用DTcms做一个独立博客网站（响应式模板）">政府认证：</a>
+                </h2>
+                <p th:if="${session.userinfo.role.roleid==4}" style="color: red">您已经认证了政府身份</p>
+                <div th:if="${userAuInfo!=null}">
+                    <p th:if="${userAuInfo.role.roleid==4}" style='color: red'>已申请个人身份认证，请等待管理员审核</p>
+                    <p th:if="${session.userinfo.role.roleid!=4 && userAuInfo.role.roleid!=4}"style="color: red">正在申请其他认证，请等待其他认证审核结束</p>
+                </div>
+                <div th:if="${userAuInfo==null && session.userinfo.role.roleid<4}">
+                <p style="margin-bottom: 30px;margin-left: 20px">提示：<b>该模块将认证您的真实身份信息，请正确填写，如有意外，概不负责</b></p>
+                <form id="governmentAuthenticationForm" class="layui-form" action="">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">账户</label>
+                        <label th:text="${session.userinfo.username}" class="layui-form-label"></label>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">机构名称</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="password" required lay-verify="required" placeholder="名称" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">负责人名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="password" required lay-verify="required" placeholder="姓名" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">负责人手机</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="password" required lay-verify="required" placeholder="号码" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">政府领导名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="password" required lay-verify="required" placeholder="姓名" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">证明文件</label>
+                        <div class="chuans">
+                            <img th:src="@{${session.userinfo.photo}}" alt="" onerror="this.src='/static/myStatic/img/IDPhoto.png'">
+                            <input class="uploadImg file1" type="file" name="photo"  >
+                        </div>
+                        <div class="layui-form-mid layui-word-aux" >点图片上传</div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="">提交</button>
+                            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                        </div>
+                    </div>
+                </form>
+                </div>
+            </article>
+            <article th:case="6" class="excerpt-minic excerpt-minic-index">
+                <h2><a href="javascript:void(0);" title="用DTcms做一个独立博客网站（响应式模板）">新闻认证：</a>
+                </h2>
+                <p th:if="${session.userinfo.role.roleid==3}" style="color: red">您已经认证了个人身份</p>
+                <div th:if="${userAuInfo!=null}">
+                    <p th:if="${userAuInfo.role.roleid==3}" style='color: red'>已申请个人身份认证，请等待管理员审核</p>
+                    <p th:if="${session.userinfo.role.roleid!=3 && userAuInfo.role.roleid!=3}"style="color: red">正在申请其他认证，请等待其他认证审核结束</p>
+                </div>
+                <div th:if="${userAuInfo==null && session.userinfo.role.roleid<3}">
+                <p style="margin-bottom: 30px;margin-left: 20px">提示：<b>该模块将认证您的真实身份信息，请正确填写，如有意外，概不负责</b></p>
+                <form id="newsAuthenticationForm" class="layui-form" action="">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">账户</label>
+                        <label th:text="${session.userinfo.username}" class="layui-form-label"></label>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">机构名称</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="password" required lay-verify="required" placeholder="名称" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">负责人名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="password" required lay-verify="required" placeholder="姓名" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">负责人手机</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="password" required lay-verify="required" placeholder="号码" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">政府领导名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="password" required lay-verify="required" placeholder="姓名" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 100px">证明文件</label>
+                        <div class="chuans">
+                            <img src="/static/myStatic/img/IDPhoto.png" alt="" onerror="this.src='/static/myStatic/img/IDPhoto.png'">
+                            <input class="uploadImg file1" type="file" name="photo"  >
+                        </div>
+                        <div class="layui-form-mid layui-word-aux" >点图片上传</div>
+                    </div>
+                    <div class="layui-form-item">
+                        <div class="layui-input-block">
+                            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="">提交</button>
+                            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                        </div>
+                    </div>
+                </form>
+            </article>
+            <article th:case="7" class="excerpt-minic excerpt-minic-index">
+                <h2><a href="javascript:void(0);" title="用DTcms做一个独立博客网站（响应式模板）">灾情列表：</a></h2>
+                <hr>
+                <div class="disasterModelDiv">
+                    <div style="overflow: hidden">
+                        <div class="input-group" style="margin:20px 15px;width: 300px;float: left">
+                            <input type="text" name="keyword" class="form-control" size="35" placeholder="请直接搜索相关灾情"
+                                   maxlength="15" autocomplete="off">
+                            <span class="input-group-btn">
+		            <button class="btn btn-default btn-search" name="search" type="submit">搜索</button>
+                    </span>
+                        </div>
+                        <div class="more" style="float: right;margin: 20px 15px;">
+                            <button class="layui-btn layui-btn-warm">批量删除</button>
+                        </div>
+                    </div>
+                    <hr>
+                    <div id="disasterList">
+
+                    </div>
+                </div>
+                <div class="fixed" style="float: right;width: 25%">
+                    <div class="widget widget-tabs" style="height: auto">
+                        <div>
+                            <ul class="nav nav-tabs" role="tablist" style="clear: both;display: block">
+                                <li role="presentation" class="active"><a href="#notice" aria-controls="notice" role="tab"
+                                                                          data-toggle="tab">平台信息</a></li>
+                                <li role="presentation"><a href="#contact" aria-controls="contact" role="tab"
+                                                           data-toggle="tab">个人信息</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="tab-content" style="padding: 0">
+                            <div role="tabpanel" class="tab-pane contact active"   id="notice">
+                                <h3 style="text-align: left;font-size: 14px">当前访问人数：</h3>
+                                <h3 style="text-align: left;font-size: 14px">当前灾情数：</h3>
+                                <h3 style="text-align: left;font-size: 14px">总浏览量：</h3>
+                            </div>
+                            <div role="tabpanel" class="tab-pane contact" id="contact">
+                                <h3 style="text-align: left;font-size: 14px">发布过灾情：</h3>
+                                <h3 style="text-align: left;font-size: 14px">捐款次数：</h3>
+                                <h3 style="text-align: left;font-size: 14px">浏览次数：</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+            <article th:case="8" class="excerpt-minic excerpt-minic-index">
+                <h2><a href="javascript:void(0);" title="用DTcms做一个独立博客网站（响应式模板）">新闻列表：</a>
+                </h2>
+                <p class="note">该平台统计了各种，正在发生的或已经发生灾情，供用户来查看，也提供了政府人员的信息存储</p>
+            </article>
+        </div>
+    </div>
+
+</section>
+<div th:insert="model::copyBot"></div>
+</body>
+</html>

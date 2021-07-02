@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="common_head">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/bootstrap.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/nprogress.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/style.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/font-awesome.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/layui/css/layui.css}">
+
+    <script th:fragment="copyModelJS">
+        function login_popup() {
+            $("#regModal").modal("hide");
+            $("#loginModelByPhone").modal("hide");
+            $("#forgetModel").modal("hide");
+            document.getElementById("login_form").reset();
+            $("#loginModal").modal("show");
+        }
+        function reg_popup(){
+            $("#loginModal").modal("hide");
+            $("#loginModelByPhone").modal("hide");
+            $("#forgetModel").modal("hide");
+            document.getElementById("reg_form").reset();
+            $("#regModal").modal("show");
+        }
+        function loginByPhone_popup(){
+            $("#regModal").modal("hide");
+            $("#loginModal").modal("hide");
+            $("#forgetModel").modal("hide");
+            document.getElementById("loginByPhone_form").reset();
+            $("#loginModelByPhone").modal("show");
+        }
+        function forget_popup(){
+            $("#regModal").modal("hide");
+            $("#loginModal").modal("hide");
+            $("#loginModelByPhone").modal("hide");
+            document.getElementById("forget_form").reset();
+            $("#forgetModel").modal("show");
+        }
+
+        $(function () {
+            //获取验证码
+            $(".getVC").click(function(){
+                $(this).parents("form").children("span").remove();
+                var phoneDom=$(this).parent("li").siblings().children("input[name=phone]");
+                var phone = phoneDom.val();
+                $.ajax({
+                    url: "/user/getVC",
+                    data:{"phone":phone},
+                    type:"POST",
+                    success:function(result){
+                        if(result.code == "300"){
+                            if(result.data.errorField=="phone"){
+                                phoneDom.after("<span style='color: red'>"+result.data.errorInfo+"</span>");
+                            }else{
+                                layui.use("layer",function() {
+                                    var layer = layui.layer;
+                                    layer.alert(result.data.errorInfo);
+                                });
+                            }
+                            return false;
+                        }else{
+                            $(this).parent("li").siblings().children("input[name=phone]").siblings("span").remove();
+                            layui.use("layer",function() {
+                                var layer = layui.layer;
+                                layer.alert("发送成功，请等待");
+                            });
+                            return false;
+                        }
+                    }
+                });
+                return false;
+            });
+            //注册
+            $("#reg_btn").click(function(){
+                $("#reg_form").find("span").remove();
+                var verifyCode=$("#id_vcode_reg").val();
+                $.ajax({
+                    url:"/user/reg",
+                    data:{"username":$.trim($("#id_account_reg").val()),"password":$.trim($("#id_password_reg").val()),"phone":$.trim($("#id_phone_reg").val()),"verifyCode":verifyCode},
+                    type:"POST",
+                    success:function(result){
+                        if(result.code == "300"){
+                            $.each(result.data.errorInfo, function (index, msg) {
+                               switch (index) {
+                                   case "username":
+                                       $("#id_account_reg").after("<span style='color: red'>"+msg+"</span>");
+                                       break;
+                                   case "password":
+                                       $("#id_password_reg").after("<span style='color: red'>"+msg+"</span>");
+                                       break;
+                                   case "Vcode":
+                                       $("#id_vcode_reg").after("<span style='color: red'>"+msg+"</span>");
+                                       break;
+                                   case "phone":
+                                       $("#id_phone_reg").after("<span style='color: red'>"+msg+"</span>");
+                                       break;
+                               }
+                            });
+                            return ;
+                        }else{
+                            $("#reg_form").children("span").remove();
+                            layui.use("layer",function(){
+                                var layer = layui.layer;
+                                layer.alert("注册成功！",{
+                                    end:function () {
+                                        login_popup();
+                                    }
+                                });
+                            });
+
+                        }
+                    }
+                })
+                return false;
+            });
+            //登录
+            $("#login_btn").click(function () {
+                $("#login_form").find("span").remove();
+                $.ajax({
+                    url:'/user/login',
+                    data:{"username":$.trim($("#id_account_login").val()),"password":$.trim($("#id_password_login").val())},
+                    type:"POST",
+                    success:function (result) {
+                        if(result.code==300){
+                            $("#id_password_login").after("<span style='color: red'>"+result.data.errorInfo+"</span>");
+                            return false
+                        }else {
+                            $("#id_password_login").children("span").remove();
+                            layui.use("layer",function(){
+                                var layer = layui.layer;
+                                layer.alert("登录成功！");
+                                if(result.data.role==5){
+                                    window.location.href="/user/jumpBackground/1";
+                                }else {
+                                    location.reload(true);
+                                }
+                            });
+                        }
+                    }
+                });
+                return false;
+            });
+            //手机号登录
+            $("#loginByPhone_btn").click(function () {
+                $("loginByPhone_form").find("span").remove();
+                $.ajax({
+                    url:"/user/loginByPhone",
+                    data:{"phone":$("#id_phone_loginByPhone").val(),"Vcode":$("#id_vcode_loginByPhone").val()},
+                    type:"post",
+                    success:function (result) {
+                        if(result.code==300){
+                            $("#id_phone_loginByPhone").after("<span style='color: red'>"+result.data.errorInfo+"</span>");
+                        }else {
+                            $("#id_phone_loginByPhone").siblings("span").remove();
+                            layui.use("layer",function(){
+                                var layer = layui.layer;
+                                layer.alert("登录成功！");
+                                location.reload();
+                            });
+                        }
+                        return false;
+                    }
+                })
+                return false;
+            });
+            //忘记密码
+            $("#forget_btn").click(function () {
+                $("#forget_form").find("span").remove();
+                $.ajax({
+                    url:"/user/forgetPassword",
+                    type:"post",
+                    data:{"phone":$("#id_phone_forget").val(),"Vcode":$("#id_vcode_forget").val()},
+                    success:function (result) {
+                        if(result.code==200){
+                            $("#forget_form").find("li").show();
+                            $("#forget_btn").hide();
+                            $("#updatePwd_btn").show();
+                        }else{
+                            $("#id_phone_forget").after("<span style='color: red'>"+result.data.errorInfo+"</span>");
+                            return false;
+                        }
+                    }
+                });
+                return false;
+            });
+            //修改密码
+            $("#updatePwd_btn").click(function () {
+                if($("#id_newpassword_1").val()!=$("#id_newpassword_2").val()){
+                    $("#id_newpassword_2").after("<span style='color: red'>两次密码不一致</span>");
+                    return false;
+                }
+                $.ajax({
+                   url:"/user/updatePassword",
+                   type:"post",
+                   data:{"password":$("#id_newpassword_1").val(),"phone":$("#id_phone_forget").val()},
+                   success:function (result) {
+                       if(result.code==200){
+                           layer.alert("修改成功！");
+                           login_popup();
+                       }else{
+                           $.each(result.data.errorInfo, function (index, msg) {
+                               switch (index) {
+                                   case "phone":
+                                       $("#id_phone_forget").after("<span style='color: red'>"+msg+"</span>");
+                                       break;
+                                   case "password":
+                                       $("#id_newpassword_1").after("<span style='color: red'>"+msg+"</span>");
+                                       break;
+                               }
+                           });
+                       }
+                       return false;
+                   }
+                });
+                return false;
+            });
+            //用户菜单
+            $("#moreMune").click(function () {
+                $(this).find("dl").addClass("layui-show");
+            });
+            $("#moreMune dl").mouseleave(function () {
+                $("#moreMune").find("dl").removeClass("layui-show");
+            });
+
+            //登录弹窗
+            $("#loginBtn").click(function () {
+                login_popup();
+                return false;
+            });
+            //注册弹窗
+            $("#regBtn").click(function () {
+                reg_popup();
+                return false;
+            });
+        });
+    </script>
+</head>
+<body>
+
+<div th:fragment="loginModel" class="loginModal modal fade" id="loginModal" th:attr="isLogin=${session.userinfo!=null}" style="display:none;">
+    <div class="modal-dialog modal-sm" style="width:450px;">
+        <div class="modal-content" style="border:none;">
+            <div class="col-right">
+                <div class="modal-header">
+                    <button type="button" id="login_close" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="loginModalLabel" style="font-size: 18px;">账号密码登录</h4>
+                </div>
+                <div class="modal-body">
+                    <section class="box-login v5-input-txt" id="box-login">
+                        <form id="login_form" action="" method="post" autocomplete="off">
+                            <ul>
+                                <li class="form-group"><input class="form-control" id="id_account_login" maxlength="50" name="username" placeholder="请输入账号/手机号" type="text"></li>
+                                <li class="form-group"><input class="form-control" id="id_password_login" name="password" placeholder="请输入密码" type="password"></li>
+                            </ul>
+
+                            <p class="good-tips marginB10"><a id="btnForgetpsw" onclick="forget_popup()" class="fr">忘记密码？</a>还没有账号？<a style="color: #ff9600" href="javascript:void(0)" onclick="reg_popup()" id="btnRegister">立即注册</a></p>
+                            <div class="login-box marginB10">
+                                <button id="login_btn" type="submit" class="btn btn-micv5 btn-block globalLogin">登录</button>
+                            </div>
+                        </form>
+
+                        <div class="threeLogin"><span><a style="width: 100%;" href="javascript:;" onclick="loginByPhone_popup()">手机号短信登录</a></span></div>
+
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:fragment="loginModelByPhone" class="loginModal modal fade" id="loginModelByPhone" style="display:none;">
+    <div class="modal-dialog modal-sm" style="width:450px;">
+        <div class="modal-content" style="border:none;">
+            <div class="col-right">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" style="font-size: 18px;">短信验证登录</h4>
+                </div>
+                <div class="modal-body">
+                    <section class="box-login v5-input-txt">
+                        <form id="loginByPhone_form" action="" method="post" autocomplete="off">
+                            <ul>
+                                <li class="form-group"><input class="form-control" id="id_phone_loginByPhone" maxlength="50" name="phone" placeholder="请输入手机号" type="text"></li>
+                                <li class="form-group" style="overflow:hidden"><input class="form-control" style="float: left;width: 50%" id="id_vcode_loginByPhone" name="Vcode" placeholder="请输入验证码" type="text"><button class="getVC" style="float: left;height: 42px;color: #333333;font-size: 14px;margin-left: 10px">获取验证码</button></li>
+                            </ul>
+
+                            <p class="good-tips marginB10"><a onclick="forget_popup()" class="fr">忘记密码？</a>还没有账号？<a style="color: #ff9600" href="javascript:void(0)" onclick="reg_popup()">立即注册</a></p>
+                            <div class="login-box marginB10">
+                                <button id="loginByPhone_btn" type="submit" class="btn btn-micv5 btn-block globalLogin">登录</button>
+                            </div>
+                        </form>
+
+                        <div class="threeLogin"><span><a style="width: 100%;" href="javascript:;" onclick="login_popup()">账号密码登录</a></span></div>
+
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:fragment="regModel" class="loginModal modal fade" id="regModal" style="display:none;">
+    <div class="modal-dialog modal-sm" style="width:450px;">
+        <div class="modal-content" style="border:none;">
+            <div class="col-right">
+                <div class="modal-header">
+                    <button type="button" id="reg_close" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="regModalLabel" style="font-size: 18px;">注册</h4>
+                </div>
+                <div class="modal-body">
+                    <section class="box-login v5-input-txt" id="box-reg">
+                        <form id="reg_form" action="" method="post" autocomplete="off">
+                            <ul>
+                                <li class="form-group"><input class="form-control" id="id_account_reg" maxlength="50" name="username" placeholder="请输入账号" type="text"></li>
+                                <li class="form-group"><input class="form-control" id="id_password_reg" name="password" placeholder="请输入密码" type="password"></li>
+                                <li class="form-group"><input class="form-control" id="id_phone_reg" name="phone" placeholder="请输入手机号" type="text"></li>
+                                <li class="form-group" style="overflow:hidden"><input class="form-control" style="float: left;width: 50%" id="id_vcode_reg" name="verifyCode" placeholder="请输入验证码" type="text"><button class="getVC" style="float: left;height: 42px;color: #333333;font-size: 14px;margin-left: 10px">获取验证码</button></li>
+                            </ul>
+                        </form>
+                        <p class="good-tips marginB10"><a onclick="forget_popup()" class="fr">忘记密码？</a>已有账号？<a style="color: #ff9600" href="javascript:void(0)" onclick="login_popup()" id="btnLogin">立即登录</a></p>
+                        <div class="login-box marginB10">
+                            <button id="reg_btn" type="submit" class="btn btn-micv5 btn-block globalLogin">注册</button>
+                        </div>
+
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:fragment="forgetModel" class="loginModal modal fade" id="forgetModel" style="display:none;">
+    <div class="modal-dialog modal-sm" style="width:450px;">
+        <div class="modal-content" style="border:none;">
+            <div class="col-right">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" style="font-size: 18px;">找回密码</h4>
+                </div>
+                <div class="modal-body">
+                    <section class="box-login v5-input-txt">
+                        <form id="forget_form" action="" method="post" autocomplete="off">
+                            <ul>
+                                <li class="form-group"><input class="form-control" id="id_phone_forget" name="phone" placeholder="请输入手机号" type="text"></li>
+                                <li class="form-group" style="overflow:hidden"><input class="form-control" style="float: left;width: 50%" id="id_vcode_forget" name="verifyCode" placeholder="请输入验证码" type="text"><button class="getVC" style="float: left;height: 42px;color: #333333;font-size: 14px;margin-left: 10px">获取验证码</button></li>
+                                <li class="form-group" style="display: none"><input class="form-control" id="id_newpassword_1" name="password" placeholder="请输入新密码" type="password"></li>
+                                <li class="form-group" style="display: none"><input class="form-control" id="id_newpassword_2" name="confirmPassword" placeholder="请确认新密码" type="password"></li>
+                            </ul>
+                        </form>
+                        <p class="good-tips marginB10"><a onclick="reg_popup()" class="fr">注册账号</a>已有账号？<a style="color: #ff9600" href="javascript:void(0)" onclick="login_popup()" id="btnForget">立即登录</a></p>
+                        <div class="login-box marginB10">
+                            <button id="forget_btn" type="submit" class="btn btn-micv5 btn-block globalLogin">确定</button>
+                            <button id="updatePwd_btn" type="submit" class="btn btn-micv5 btn-block globalLogin" style="display: none">确认修改</button>
+                        </div>
+
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<header th:fragment="copyTop" class="header">
+    <nav class="navbar navbar-default" id="navbar">
+        <div class="container">
+            <div class="navbar-header" style="padding-top: 10px">
+                <h1 class="logo hvr-bounce-in"><a href="" title="灾情信息平台"><img
+                        src="/static/myStatic/img/mainlogo.png" width="180" height="42" alt="灾情信息平台"></a></h1>
+            </div>
+            <div class="collapse navbar-collapse" id="header-navbar">
+                <ul class="nav navbar-nav navbar-left" style="margin-left: 20px">
+                    <li>
+                        <a th:if="${session.userinfo!=null ? session.userinfo.role.roleid!=5:true}" data-cont="首页" title="首页" th:href="@{/disaster/jumpMain}">首页</a>
+                        <a th:if="${session.userinfo!=null ? session.userinfo.role.roleid==5:false}" data-cont="首页" title="首页" th:href="@{/user/jumpBackground/1}">首页</a>
+                    </li>
+                    <li><a data-cont="联系我们" title="联系我们" href="/disaster/jumpContactUs">联系我们</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li th:if="${session.userinfo==null}"><a data-cont="登录" title="登录" href="javascript:void(0)" id="loginBtn">登录</a></li>
+                    <li th:if="${session.userinfo==null}"><label style="line-height: 60px">||</label></li>
+                    <li th:if="${session.userinfo==null}"><a data-cont="注册" title="注册" href="javascript:void(0)" id="regBtn">注册</a></li>
+                    <li th:if="${session.userinfo!=null}" class="layui-nav-item" id="moreMune">
+                        <a href="javascript:;">
+                            <img th:src="@{${session.userinfo.photo != null?session.userinfo.photo: '/static/myStatic/img/IDphoto.png'}}" alt="" class="layui-nav-img">
+                            <label th:text="${session.userinfo.virtualname !=null?session.userinfo.virtualname:session.userinfo.username}"></label>
+                            <span class="layui-nav-more"><i class="layui-icon layui-icon-triangle-d"></i></span>
+                        </a>
+                        <dl class="layui-nav-child" style="text-align: center">
+                            <dd th:if="${session.userinfo!=null?session.userinfo.role.roleid!=5:true}" style="padding: 5px 0;"><a th:href="@{/user/jumpUserInfo/1}">个人资料</a></dd>
+                            <dd th:if="${session.userinfo!=null?session.userinfo.role.roleid!=5:true}" style="padding: 5px 0;"><a th:href="@{/user/jumpUserInfo/2}">安全设置</a></dd>
+                            <hr th:if="${session.userinfo!=null?session.userinfo.role.roleid!=5:true}">
+                            <dd style="padding: 5px 0;"><a href="/logout">退出登录</a></dd>
+                        </dl>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<div th:fragment="copyCityChose" style="width: auto;height: auto;">
+    <link rel='stylesheet' type="text/css" href='/static/otherStatic/choseCity/css/chosen.min.css'>
+    <style type="text/css">
+        .chosen-container-single{
+            width: 100px !important;
+        }
+
+        #choseDiv .layui-form-select{
+            display: none !important;
+        }
+    </style>
+    <script src="/static/otherStatic/choseCity/js/chosen.jquery.min.js"></script>
+    <script src="/static/otherStatic/choseCity/js/area_chs.js"></script>
+    <script type="text/javascript">
+        var areaObj = [];
+        function initLocation(e){
+            var a = 0;
+            for (var m in e) {
+                areaObj[a] = e[m];
+                var b = 0;
+                for (var n in e[m]) {
+                    areaObj[a][b++] = e[m][n];
+                }
+                a++;
+            }
+        }
+    </script>
+    <label class="layui-form-label" style="width: 120px">地点：</label>
+    <div id="choseDiv">
+        <div class="layui-form-mid layui-word-aux">
+        <select id="country" class="dept_select"></select>
+        </div>
+        <div class="layui-form-mid layui-word-aux">
+        <select id="province" class="dept_select"></select>
+        </div>
+        <div class="layui-form-mid layui-word-aux">
+        <select id="city" class="dept_select"></select>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="/static/otherStatic/choseCity/js/location_chs.js"></script>
+    <script type="text/javascript">
+        var country = '';
+        for (var a=0;a<=_areaList.length-1;a++) {
+            var objContry = _areaList[a];
+            country += '<option value="'+objContry+'" a="'+(a+1)+'">'+objContry+'</option>';
+        }
+        $("#country").html(country).chosen().change(function(){
+            var a = $("#country").find("option[value='"+$("#country").val()+"']").attr("a");
+            var _province = areaObj[a];
+            var province = '';
+            for (var b in _province) {
+                var objProvince = _province[b];
+                if (objProvince.n) {
+                    province += '<option value="'+objProvince.n+'" b="'+b+'">'+objProvince.n+'</option>';
+                }
+            }
+            if (!province) {
+                province = '<option value="0" b="0">------</option>';
+            }
+            $("#province").html(province).chosen().change(function(){
+                var b = $("#province").find("option[value='"+$("#province").val()+"']").attr("b");
+                var _city = areaObj[a][b];
+                var city = '';
+                for (var c in _city) {
+                    var objCity = _city[c];
+                    if (objCity.n) {
+                        city += '<option value="'+objCity.n+'">'+objCity.n+'</option>';
+                    }
+                }
+                if (!city) {
+                    var city = '<option value="0">------</option>';
+                }
+                $("#city").html(city).chosen().change();
+                $(".dept_select").trigger("chosen:updated");
+            });
+            $("#province").change();
+            $(".dept_select").trigger("chosen:updated");
+        });
+        $("#country").change();
+    </script>
+</div>
+
+<footer th:fragment="copyBot" class="footer">
+    <div class="container">
+        <p>灾情信息平台 &copy; 2020.骨灰级萌新 制作 </p>
+    </div>
+</footer>
+</body>
+</html>

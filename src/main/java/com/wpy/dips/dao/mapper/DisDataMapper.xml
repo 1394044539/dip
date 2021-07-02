@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wpy.dips.dao.DisDataDao">
+
+    <select id="findDisData" resultType="com.wpy.dips.bean.DisData">
+        select * from t_disData
+        where disasterid=#{disasterid}
+    </select>
+
+    <insert id="addData" useGeneratedKeys="true" keyProperty="ddataid">
+        insert into t_disdata(disasterid,tableTitle,tableTh,tableTime,tableData,updateTime)
+        values (#{disasterid},#{tableTitle},#{tableTh},#{tableTime},#{tableData},#{updateTime})
+    </insert>
+
+    <update id="updateDisData">
+        update t_disdata
+        set tableTitle=#{tableTitle},tableTh=#{tableTh},tableTime=#{tableTime},tableData=#{tableData},updateTime=#{updateTime}
+        where ddataid=#{ddataid}
+    </update>
+
+    <delete id="deleteDisData">
+        delete
+        from t_disdata
+        where ddataid=#{ddataid}
+    </delete>
+</mapper>

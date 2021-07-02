@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>主页</title>
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/bootstrap.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/nprogress.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/style.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/font-awesome.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/layui/css/layui.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/login/index.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/swiper/swiper.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/choicetype/jqueryfuns.css}">
+    <style type="text/css">
+        swiper-slide a{
+            -moz-background-size:100% 100%;
+            background-size:100% 100%;
+        }
+    </style>
+
+
+    <script th:src="@{/static/otherStatic/jquery/jquery-3.4.1.min.js}"></script>
+    <script th:src="@{/static/otherStatic/layui/layui.js}"></script>
+    <script th:src="@{/static/otherStatic/swiper/swiper.min.js}"></script>
+    <script th:src="@{/static/otherStatic/pagemould/js/bootstrap.min.js}"></script>
+    <script th:replace="model::copyModelJS"></script>
+    <script type="text/javascript">
+        function initMain(nextPage) {
+            if(nextPage!=0) {
+                $.ajax({
+                    url:"/disaster/findAllDisaster",
+                    type:"POST",
+                    data:{"pageNum":nextPage},
+                    success:function (result) {
+                        if(result.code==200){
+                            $("#lookMore").attr("onclick", "initMain(" + result.data.pageInfo.nextPage + ")");
+                            var totalDisasterHot=0;
+                            $.each(result.data.pageInfo.list, function (index, disaster) {
+                                totalDisasterHot+=disaster.hot;
+                                $(".swiper-slide").eq(index).find("img").attr({"src":""+disaster.photo+"","title":""+disaster.name+""});
+                                $(".swiper-slide").eq(index).children("a").attr("href","/disaster/jumpDisasterInfo/"+disaster.disasterid+"");
+                                $("#disasterList").append('<article class="excerpt" style="">\n' +
+                                    '                <a class="focus" href="/disaster/jumpDisasterInfo/' + disaster.disasterid + '" title="' + disaster.name + '" target="_blank" ><img class="thumb" data-original="' + disaster.photo + '" src="' + disaster.photo + '" alt="' + disaster.name + '"  style="display: inline;"></a>\n' +
+                                    '                <header><a class="cat" href="/disaster/jumpDisasterInfo/' + disaster.disasterid + '" title="'+disaster.type+'" >'+disaster.type+'<i></i></a>\n' +
+                                    '                    <h2><a href="/disaster/jumpDisasterInfo/' + disaster.disasterid + '" title="' + disaster.name + '" target="_blank" >' + disaster.name + '</a>\n' +
+                                    '                    </h2>\n' +
+                                    '                </header>\n' +
+                                    '                <p class="meta">\n' +
+                                    '                    <time class="time"><i class="glyphicon glyphicon-time"></i> ' + disaster.time + '</time>\n' +
+                                    '                    <span class="views"><i class="glyphicon glyphicon-eye-open"></i> ' + disaster.hot + '</span> <a class="comment" href="/disaster/jumpDisasterInfo/' + disaster.disasterid + '" title="评论" target="_blank" ><i class="glyphicon glyphicon-comment"></i> 虚空评论</a>\n' +
+                                    '                </p>\n' +
+                                    '                <p class="note">' + disaster.sysnopsis + '</p>\n' +
+                                    '            </article>');
+                            });
+                            $("#notice").children("h3").eq(1).text("当前灾情数："+result.data.pageInfo.total);
+                            $("#notice").children("h3").eq(2).text("总浏览量："+totalDisasterHot);
+                            //初始化滚动框
+                            var mySwiper = new Swiper(".swiper-container",{
+                                autoplay: {
+                                    disableOnInteraction: false, //手动滑动之后不打断播放
+                                },
+                                loop : true,
+                                lazyLoading : false,
+                                observer: true,
+                                preventClicks:false,
+                                pagination: {
+                                    el: '.swiper-pagination',
+                                },
+                                navigation: {
+                                    nextEl: '.swiper-button-next',
+                                    prevEl: '.swiper-button-prev',
+                                },
+                                scrollbar: {
+                                    el: '.swiper-scrollbar',
+                                },
+                            });
+
+
+                        }
+                    }
+
+                });
+            }else{
+                $("#lookMore").attr("onclick", "false");
+                $("#lookMore").prepend("<h5>没有更多数据。。。</h5>");
+            }
+
+
+        }
+
+        function initSeach(nextPage,key,selectType,sort) {
+            if(nextPage!=0) {
+                $.ajax({
+                    url:"/disaster/findDisasterBySearch",
+                    type:"post",
+                    data:{"key":key,"pageNum":nextPage,"selectType":selectType,"sort":sort},
+                    success:function (result) {
+                        if(result.code==200) {
+                            if(result.data.pageInfo.pageNum==1){
+                                $("#disasterList").empty();
+                            }
+                            $("#lookMore").attr("onclick", "initSeach(" + result.data.pageInfo.nextPage + ",'"+key+"','"+selectType+"','"+sort+"')");
+                            $.each(result.data.pageInfo.list, function (index, disaster) {
+
+
+                                //$("#lookMore").attr("onclick","alert('hello')");
+                                $("#disasterList").append('<article class="excerpt" style="">\n' +
+                                    '                <a class="focus" href="/disaster/jumpDisasterInfo/' + disaster.disasterid + '" title="' + disaster.name + '" target="_blank" ><img class="thumb" data-original="' + disaster.photo + '" src="' + disaster.photo + '" alt="' + disaster.name + '"  style="display: inline;"></a>\n' +
+                                    '                <header><a class="cat" href="/disaster/jumpDisasterInfo/' + disaster.disasterid + '" title="'+disaster.type+'" >'+disaster.type+'<i></i></a>\n' +
+                                    '                    <h2><a href="/disaster/jumpDisasterInfo/' + disaster.disasterid + '" title="' + disaster.name + '" target="_blank" >' + disaster.name + '</a>\n' +
+                                    '                    </h2>\n' +
+                                    '                </header>\n' +
+                                    '                <p class="meta">\n' +
+                                    '                    <time class="time"><i class="glyphicon glyphicon-time"></i> ' + disaster.time + '</time>\n' +
+                                    '                    <span class="views"><i class="glyphicon glyphicon-eye-open"></i> ' + disaster.hot + '</span> <a class="comment" href="/disaster/jumpDisasterInfo/' + disaster.disasterid + '" title="评论" target="_blank" ><i class="glyphicon glyphicon-comment"></i> 虚空评论</a>\n' +
+                                    '                </p>\n' +
+                                    '                <p class="note">' + disaster.sysnopsis + '</p>\n' +
+                                    '            </article>');
+                            });
+
+                        }
+                    }
+                });
+            }else{
+                $("#lookMore").attr("onclick", "false");
+                $("#lookMore").prepend("<h5>没有更多数据。。。</h5>");
+            }
+
+        }
+
+
+        $(function () {
+
+            var searchKey=null;
+            var sortType=null;
+
+            //加载页面
+            initMain();
+
+            //热度排序
+            $("#sortHot").click(function () {
+                sortType='hot';
+                var selectType=$(".listIndex a[class=selected]").text();
+                initSeach(1,searchKey,selectType,sortType);
+            });
+            //时间排序
+            $("#sortTime").click(function () {
+                sortType='time';
+                var selectType=$(".listIndex a[class=selected]").text();
+                initSeach(1,searchKey,selectType,sortType);
+            });
+
+            $(".listIndex a ").click(function () {//点击某个分类，直接去掉搜索框内容
+                $("#typeSearch").parent("span").siblings("input[name=keyword]").val("");
+                var selectType = $(this).text();
+                $(".listIndex a ").removeClass("selected");
+                $(this).addClass("selected");
+                initSeach(1,null,selectType,sortType);
+            });
+
+            $("#typeSearch").click(function () {//点击搜索，需要加上分类的内容
+                searchKey=$("#typeSearch").parent("span").siblings("input[name=keyword]").val();
+                var selectType=$(".listIndex a[class=selected]").text();
+                initSeach(1,searchKey,selectType,sortType);
+            });
+
+
+
+        })
+    </script>
+</head>
+<body>
+<div th:replace="model::loginModel"></div>
+<div th:replace="model::loginModelByPhone"></div>
+<div th:replace="model::regModel"></div>
+<div th:replace="model::forgetModel"></div>
+
+<div th:replace="model::copyTop"></div>
+
+<section class="container">
+    <div class="content-wrap" style="min-height: 300px">
+        <div id="focusslide" class="carousel slide" data-ride="carousel">
+            <div class="swiper-container" style="width: 100%;height: 300px">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide"><a href="" style="width:100%;height:300px;display:block"><img src="" width="100%" height="300px"></a></div>
+                    <div class="swiper-slide"><a href="" style="width:100%;height:300px;display:block"><img src="" width="100%" height="300px"></a></div>
+                    <div class="swiper-slide"><a href="" style="width:100%;height:300px;display:block"><img src="" width="100%" height="300px"></a></div>
+                    <div class="swiper-slide"><a href="" style="width:100%;height:300px;display:block"><img src="" width="100%" height="300px"></a></div>
+                    <div class="swiper-slide"><a href="" style="width:100%;height:300px;display:block"><img src="" width="100%" height="300px"></a></div>
+                </div>
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-scrollbar"></div>
+            </div>
+        </div>
+
+    </div>
+    <div class="content-wrap">
+        <div class="content">
+            <article class="excerpt-minic excerpt-minic-index">
+                <h2><a target="_blank" href="#" title="用DTcms做一个独立博客网站（响应式模板）">平台简介：</a>
+                </h2>
+                <p class="note">该平台统计了各种，正在发生的或已经发生灾情，供用户来查看，也提供了政府人员的信息存储</p>
+            </article>
+            <div class="title">
+                <div style="display: inline-block"><h3>灾情分类</h3></div>
+                <article class="excerpt-minic excerpt-minic-index">
+                    <div id="selectList" class="screenBox screenBackground">
+                        <dl class="listIndex" attr="terminal_brand_s">
+                            <dt>类  型：</dt>
+                            <dd>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="全部">全部</a>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="海啸">海啸</a>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="地震">地震</a>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="台风">台风</a>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="洪水">洪水</a>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="冰雹">冰雹</a>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="大雪">大雪</a>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="干旱">干旱</a>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="禽流感">禽流感</a>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="疫情">疫情</a>
+
+                            </dd>
+                        </dl>
+                        <dl class="listIndex" attr="价格范围">
+                            <dt>        </dt>
+                            <dd>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="火灾">火灾</a>
+                                <a href="javascript:void(0)" values2="" values1="" attrval="其他">其他</a>
+                            </dd>
+                        </dl>
+                    </div>
+                </article>
+                <div class="input-group" style="margin:20px 15px">
+                    <input type="text" name="keyword" class="form-control" size="35" placeholder="请直接搜索相关灾情"
+                           maxlength="15" autocomplete="off">
+                    <span class="input-group-btn">
+		            <button class="btn btn-default btn-search" id="typeSearch" type="submit">搜索</button>
+                    </span>
+                </div>
+                <div style="display: inline-block"><h3>灾情列表</h3></div>
+                <div class="more">
+                    <a href="javascript:void(0)" title="时间排序" id="sortTime">时间排序</a>
+                    <a href="javascript:void(0)" title="热度排序" id="sortHot">热度排序</a>
+                </div>
+                <div id="disasterList" style="display: inline-block;width: 100%;margin-top: 5px"></div>
+            </div>
+            <div class="ias_trigger">
+                <a id="lookMore" href="javascript:;" onclick="">查看更多</a>
+            </div>
+
+
+        </div>
+    </div>
+    <aside class="sidebar">
+        <div class="fixed">
+            <div class="widget widget-tabs" style="height: auto">
+                <div>
+                    <ul class="nav nav-tabs" role="tablist" style="clear: both;display: block">
+                        <li role="presentation" class="active"><a href="#notice" aria-controls="notice" role="tab"
+                                                                  data-toggle="tab">平台信息</a></li>
+                        <li role="presentation"><a href="#contact" aria-controls="contact" role="tab"
+                                                   data-toggle="tab">个人信息</a></li>
+                    </ul>
+                </div>
+
+                <div class="tab-content" style="padding: 0">
+                    <div role="tabpanel" class="tab-pane contact active"   id="notice">
+                        <h3 style="text-align: left;font-size: 14px">当前访问人数：</h3>
+                        <h3 style="text-align: left;font-size: 14px">当前灾情数：</h3>
+                        <h3 style="text-align: left;font-size: 14px">总浏览量：</h3>
+                    </div>
+                    <div role="tabpanel" class="tab-pane contact" id="contact">
+                        <h3 style="text-align: left;font-size: 14px">发布过灾情：</h3>
+                        <h3 style="text-align: left;font-size: 14px">捐款次数：</h3>
+                        <h3 style="text-align: left;font-size: 14px">浏览次数：</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div th:if="${session.userinfo!=null}?${session.userinfo.role.roleid>1}:false" class="widget widget_hot">
+            <h3>操作</h3>
+            <ul>
+                <li th:each="per:${session.permissionsinfo}" th:if="${per=='dnt:query'}"><h2>
+                    <a style="font-size: 20px" href="">捐款数据</a>
+                </h2></li>
+                <li th:each="per:${session.permissionsinfo}" th:if="${per=='news:query'}"><h2>
+                    <a style="font-size: 20px" href="">新闻列表</a>
+                </h2></li>
+                <li th:each="per:${session.permissionsinfo}" th:if="${per=='dis:add'}"><h2>
+                    <a style="font-size: 20px" th:href="@{/disaster/jumpAddDisaster}">添加灾情</a>
+                </h2></li>
+                <li th:each="per:${session.permissionsinfo}" th:if="${per=='dis:query'}"><h2>
+                    <a style="font-size: 20px" th:href="@{/user/jumpUserInfo/7}">灾情列表</a>
+                </h2></li>
+            </ul>
+        </div>
+        <div class="widget widget_sentence" style="margin-bottom: 0px">
+            <h3>平台特色</h3>
+        </div>
+        <div class="widget widget_sentence">
+            <a href="#" rel="nofollow" title="可视化数据展示">
+                <img style="width: 100%" th:src="@{/static/myStatic/img/DataShow.png}" alt="诚聘前端设计师"></a>
+        </div>
+        <div class="widget widget_sentence">
+            <a href="#" rel="nofollow" title="在线捐赠">
+                <img style="width: 100%" th:src="@{/static/myStatic/img/Donation.png}" alt="不会做前端，做不来"></a>
+        </div>
+        <div class="widget widget_sentence">
+            <a href="#" rel="nofollow" title="医疗帮助">
+                <img style="width: 100%" th:src="@{/static/myStatic/img/Treatment.png}" alt="不开玩笑，求联系"></a>
+        </div>
+        <div class="widget widget_sentence">
+            <h3>友情链接</h3>
+            <div class="widget-sentence-link">
+                <a href="#" title="网站建设">联系我们</a>&nbsp;&nbsp;&nbsp;
+            </div>
+        </div>
+    </aside>
+</section>
+
+<div th:replace="model::copyBot"></div>
+</body>
+</html>

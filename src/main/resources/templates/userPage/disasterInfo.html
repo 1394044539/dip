@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>灾情信息页面</title>
+
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/bootstrap.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/nprogress.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/style.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/font-awesome.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/layui/css/layui.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/login/index.css}">
+    <style type="text/css">
+        #imageDiv {
+            margin: 0 auto;
+            width: 820px;
+            height: auto;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .left_div {
+            width: 50%;
+            height: 200px;
+            float: left;
+            background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
+        }
+
+        .left_div h1,h2, h3, h4, h5,h6 {
+            text-align: left;
+            padding-left: 30px;
+            margin-top: 20px;
+        }
+
+        .right_div{
+            float: right;
+            width: 50%;
+        }
+
+        .disabledInfoDiv {
+            position: relative;
+            background-color: #FFFFFF;
+            min-height: 500px;
+            margin: 0 auto;
+            width: 820px;
+            margin-bottom: 15px;
+        }
+
+        .switchModel {
+            height: 46px;
+            width: 100%;
+            background-color: #E6E6E6;
+        }
+
+        .on-off {
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 170px;
+            height: 46px;
+            line-height: 40px;
+            vertical-align: middle;
+            position: relative;
+            left: 80%;
+        }
+
+        .back {
+            left: 7px;
+            top: 2px;
+            width: 120px;
+            height: 40px;
+            border: 3.3px solid white;
+            background-color: lightgreen;
+            position: absolute;
+            border-radius: 40px;
+            transition: background-color 300ms linear;
+        }
+
+        .back2 {
+            width: 129px;
+            height: 46px;
+            background-color: grey;
+            position: absolute;
+            opacity: 0.1;
+            top: -0.5px;
+            left: 2.5px;
+            border-radius: 40px;
+            transition: background-color 300ms linear;
+        }
+
+        .front {
+            top: 2px;
+            width: 40px;
+            height: 40px;
+            border: 4.3px solid white;
+            border-radius: 40px;
+            position: absolute;
+            left: 0px;
+            background-color: lightgrey;
+            transition: left 300ms ease-in-out, right 300ms ease-in-out;
+        }
+
+        .front:hover {
+            cursor: pointer;
+        }
+
+        .text {
+            color: blue;
+            position: absolute;
+            padding: 14px;
+            font-size: 14px;
+        }
+
+        .myTable td{
+            width: 80px;
+            height: 30px;
+            cursor: pointer;
+        }
+
+        .addDataTable td{
+            width: 80px;
+            height: 30px;
+        }
+
+
+    </style>
+
+
+    <script th:src="@{/static/otherStatic/jquery/jquery-3.4.1.min.js}"></script>
+    <script th:src="@{/static/otherStatic/layui/layui.js}"></script>
+    <script th:src="@{/static/otherStatic/pagemould/js/bootstrap.min.js}"></script>
+    <script th:src="@{/static/otherStatic/echarts/echarts.min.js}"></script>
+    <script th:replace="model::copyModelJS"></script>
+    <script type="text/javascript">
+        function initData(){
+            $("#dataTableDiv").empty();
+            $(".showDataDiv").empty();
+            $.ajax({
+                url:"/disaster/findDisData/"+[[${disaster.disasterid}]],
+                type:"GET",
+                success:function (result) {
+                    if(result.code==200){
+                        $.each(result.data.disDataMap,function (index,disData) {
+                            $(".showDataDiv").append("<div class='showEcharts' style='width: 600px;height:400px;'></div>");
+                            var DataChats=echarts.init($(".showEcharts")[index]);
+                            var option=getOpration(disData);
+                            // 使用刚指定的配置项和数据显示图表。
+                            DataChats.setOption(option);
+                            var eleTime = document.createElement('h4');
+                            eleTime.innerHTML = "该数据于"+disData.updateTime+"更新";
+                            $(".showEcharts")[index].before(eleTime);
+
+                            if($(".addDataDiv").length>0){
+                                var tableTr=getTable(disData);
+                                var addTable=getAddTable(disData);
+                                //生成表格
+                                var div=$("<div></div>");
+                                div.append("<table class='addDataTable' style='min-width: 200px;max-width: 700px;min-height: 30px;margin: auto' class='myTable' border='1'><caption>您可以在这里为下表添加新数据</caption>"+addTable+"</table>");
+                                div.append("<button class='addDataBtn'>添加新数据</button>").append("<button class='resetDataBtn'>清空</button>");
+                                div.append("<table tableid='"+disData.tableid+"' style='min-width: 200px;max-width: 700px;min-height: 30px;margin: auto' class='myTable' border='1'><caption>"+disData.tableTitle+"</caption>"+tableTr+"</table>");
+                                div.append("<button class='updateTableDataBtn'>保存</button>").append("<button class='deleteDataTable'>删除表格</button>")
+
+
+                                $("#dataTableDiv").append(div);
+                            }
+                        })
+                    }
+
+                    return false;
+                }
+            })
+            return false;
+        }
+
+        function getTable(disData) {
+            var th=JSON.parse(disData.tableTh);
+            var time=JSON.parse(disData.tableTime);
+            var data=JSON.parse(disData.tableData);
+
+            var tableTr="";
+            var tableRow=time.length+1;//行
+            var tableCol=th.length+1;//列
+            // var tableRow=disData.tableTime.length+1;//行
+            // var tableCol=disData.tableTh.length+1;//列
+            for(var i=0;i<tableRow;i++){//生成行数
+                tableTr+="<tr>";
+                for(var j=0;j<tableCol;j++){//生成列数
+                    if(j==0&&i==0){//第一行第一格没有数据
+                        tableTr+="<td></td>";
+                    }else if(i==0){//第一行填表头
+                        tableTr+="<td>"+th[j-1]+"</td>";
+                    }else if(j==0){//第一列填行名
+                        tableTr+="<td>"+time[i-1]+"</td>";
+                    }else{
+                        tableTr+="<td>"+data[i-1][j-1]+"</td>"
+                    }
+                }
+                tableTr+="</tr>"
+            }
+
+            return tableTr;
+        }
+
+        function getAddTable(disData) {
+            var th=JSON.parse(disData.tableTh);
+
+            var tableTr="";
+            var tableCol=th.length+1;//列
+            for(var i=0;i<2;i++){//生成行数
+                tableTr+="<tr>";
+                for(var j=0;j<tableCol;j++){//生成列数
+                    if(j==0&&i==0){//第一行第一格没有数据
+                        tableTr+="<td></td>";
+                    }else if(i==0){//第一行填表头
+                        tableTr+="<td>"+th[j-1]+"</td>";
+                    }else if(j==0){
+                        tableTr+="<td class='addDataTd'><span style='color: grey'>填上时间</span></td>";
+                    }else{
+                        tableTr+="<td class='addDataTd'></td>"
+                    }
+                }
+                tableTr+="</tr>"
+            }
+
+            return tableTr;
+        }
+
+        function getOpration(disData){
+            var title=disData.tableTitle;
+            var th=JSON.parse(disData.tableTh);
+            var time=JSON.parse(disData.tableTime);
+            var data=JSON.parse(disData.tableData);
+            var updateTime=disData.updateTime;
+            var series=[];
+            var timeData=[];
+            for(var i = 0;i<th.length;i++){//第几列
+                //假设第一行第一列，需要的是data[],[]
+                timeData=[];
+                for(var j=0;j<data.length;j++){
+                    timeData.push(data[j][i]);
+                }
+                series.push({
+                    name: th[i],
+                    type: 'line',
+                    smooth:true,
+                    data: timeData
+                });
+            }
+
+            var option = {
+                title: {
+                    text: title
+                },
+                tooltip: {},
+                legend: {
+                    data: th
+                },
+                xAxis: {
+                    data: time
+                },
+                yAxis: {},
+                series: series
+            };
+
+            return option;
+        }
+
+
+
+        $(function () {
+            initData();
+
+
+            var myChats=echarts.init($("#echatsTest")[0]);
+
+            //滚动悬浮设置
+            var loop1Top=0;
+            $(window).scroll(function () {
+                var oTop = $(".header").height()+$(".content-wrap").eq(0).height()+$(".nav-tabs").height();
+                loop1Top=oTop;
+                var sTop=$(this).scrollTop();//当前滚动高度
+                console.log(oTop+":"+sTop)
+                if(sTop >= oTop){//当滚动高度要大于固定div高度时
+                    var Wwidth=$("#mainBody").width();
+                    var X= $(".content-wrap").offset().left;
+                    $(".nav-tabs").css({"position":"fixed","top":"0","width":"100%","left":0,"padding-left":X});
+                }else {
+                    $(".nav-tabs").css({"position": "static","padding-left":0});
+                }
+            });
+
+
+            //点击加入数据按钮
+            $("#addDataBtn").click(function () {
+                var left = $("#addDataBtn").offset().left/2-$("#modalTable").width()/2;
+                console.log(top+" "+left);
+                $("#modalTable").css( {position : 'absolute',top:0,left:left} );
+                $("#modalTable").modal();
+
+            });
+
+            //添加表格
+            $("#addTable").click(function () {
+                $("#tableTips").children("span").remove();
+                var tableName=$("#modalTable").find("input[name=tableName]").val();
+                var tableRow=$("#modalTable").find("input[name=row]").val();
+                var tableCol=$("#modalTable").find("input[name=col]").val();
+                if(tableName=="" || tableRow=="" || tableCol=="" || tableName==null || tableRow==null || tableCol==null){
+                    $("#tableTips").append("<span style='color: red'>请将信息填写完整</span>")
+                    return false;
+                }
+                $("#modalTable").modal("hide");
+                var tableTr="";
+                for(var i=0;i<tableRow;i++){
+                    tableTr+="<tr>";
+                    for(var j=0;j<tableCol;j++){//生成列数
+                        if(j>0&&i==0){
+                            tableTr+="<td><span style='color: grey'>填上表头</span></td>";
+                        }else if(j==0&&i>0){
+                            tableTr+="<td><span style='color: grey'>填上时间</span></td>";
+                        }else{
+                            tableTr+="<td></td>";
+                        }
+
+                    }
+                    tableTr+="</tr>"
+                }
+                var div=$("<div></div>");
+                div.append("<table style='min-width: 200px;max-width: 700px;min-height: 30px;margin: auto' class='myTable' border='1'><caption>"+tableName+"</caption>"+tableTr+"</table>");
+                div.append("<button class='getTableDataBtn'>保存</button>").append("<button class='deleteThisTable'>删除表格</button>")
+                $("#dataTableTestDiv").append(div);
+            });
+
+            //双击修改表格
+            $(document).on("dblclick",".myTable td,.addDataTd",function () {
+                if($(this).children("input").length>0){
+                    return false;
+                }
+                var tdDom = $(this);
+                //保存初始值
+                var tdPreText = $(this).text();
+                //给td设置宽度和给input设置宽度并赋值
+                $(this).width(80).html("<input type='text'>").find("input").width(80).val(tdPreText);
+                //失去焦点的时候重新赋值
+                var inputDom = $(this).find("input");
+                inputDom.blur(function(){
+                    var newText = $(this).val();
+                    $(this).remove();
+                    tdDom.text(newText);
+                });
+            });
+            //保存表格数据
+            $(document).on("click",".getTableDataBtn",function () {
+                var tableDom=$(this).siblings(".myTable");
+                //判断表格是否填写完整
+                var flag=0;
+                var tableTr=[];
+                var tableTd=[];
+                var tableTime=[];
+                var tableTh=[];
+                tableDom.find("tr").each(function (i) {
+                    if(flag>0){
+                        return false;
+                    }
+                    tableTd=[];
+                    $(this).children("td").each(function (j) {
+                        if(i==0 && j==0){
+                            return true;
+                        }
+                        if($(this).text()==null || $(this).text()==""){ //当行和列不是第一个的情况下判断是否为空
+                            flag++;
+                            alert("请将数据填写完整");
+                            return false;
+                        }
+                        if(i==0&&j>0){//第一行非第一列
+                            tableTh.push($(this).text());
+                        }else if(j==0&&i>0){//第一列非第一行
+                            tableTime.push($(this).text());
+                        }else {
+                            tableTd.push($(this).text());
+                        }
+                    })
+                    if(i!=0){
+                        tableTr.push(tableTd);
+                    }
+
+                })
+                if(flag>0){
+                    return false;
+                }
+                //添加数据
+                var tableTitle=tableDom.children("caption").text();
+                $.ajax({
+                    url:"/disaster/addDisData",
+                    type:"POST",
+                    data:{"tableTitle":tableTitle,"tableTh":JSON.stringify(tableTh),"tableTime":JSON.stringify(tableTime),"tableData":JSON.stringify(tableTr),"disasterid":[[${disaster.disasterid}]]},
+                    success:function (result) {
+                        if(result.code==200){
+                            var option = getOpration(result.data.map);
+                            // 使用刚指定的配置项和数据显示图表。
+                            myChats.setOption(option);
+                            $("#echatsTest").before("<h4>该数据于"+result.data.map.updateTime+"更新</h4>");
+                            initData();
+                        }else{
+                            alert("保存失败！");
+                        }
+
+                    }
+                })
+            });
+            //修改表格数据
+            $(document).on("click",".updateTableDataBtn",function () {
+                var tableDom=$(this).siblings(".myTable");
+                //判断表格是否填写完整
+                var flag=0;
+                var tableTr=[];
+                var tableTd=[];
+                var tableTime=[];
+                var tableTh=[];
+                tableDom.find("tr").each(function (i) {
+                    if(flag>0){
+                        return false;
+                    }
+                    tableTd=[];
+                    $(this).children("td").each(function (j) {
+                        if(i==0 && j==0){
+                            return true;
+                        }
+                        if($(this).text()==null || $(this).text()==""){ //当行和列不是第一个的情况下判断是否为空
+                            flag++;
+                            alert("请将数据填写完整");
+                            return false;
+                        }
+                        if(i==0&&j>0){//第一行非第一列
+                            tableTh.push($(this).text());
+                        }else if(j==0&&i>0){//第一列非第一行
+                            tableTime.push($(this).text());
+                        }else {
+                            tableTd.push($(this).text());
+                        }
+                    })
+                    if(i!=0){
+                        tableTr.push(tableTd);
+                    }
+
+                })
+                if(flag>0){
+                    return false;
+                }
+                var tableTitle=tableDom.children("caption").text();
+                $.ajax({
+                    url:"/disaster/updateDisData",
+                    type:"POST",
+                    data:{"tableid":tableDom.attr("tableid"),"tableTitle":tableTitle,"tableTh":JSON.stringify(tableTh),"tableTime":JSON.stringify(tableTime),"tableData":JSON.stringify(tableTr)},
+                    success:function (result) {
+                         if(result.code==200){
+                             alert("修改成功");
+                             initData();
+                             var option = getOpration(result.data.map);
+                            // 使用刚指定的配置项和数据显示图表。
+                             myChats.setOption(option);
+
+                            $("#echatsTest").before("<h4>该数据于"+result.data.map.updateTime+"更新</h4>");
+                         }else{
+                             alert("保存失败！");
+                         }
+
+                    }
+                })
+            });
+            //添加新数据
+            $(document).on("click",".addDataBtn",function () {
+                var addTableDom=$(this).siblings(".addDataTable");
+                //判断表格是否填写完整
+                var flag=0;
+                var tableTr=$("<tr></tr>");
+                //取出新的一行数据
+                addTableDom.find("tr").each(function (i) {
+                    if(flag>0){
+                        return false;
+                    }
+                    if(i==0){
+                        return true;
+                    }
+                    $(this).children("td").each(function (j) {
+                        if($(this).text()==null || $(this).text()==""){ //当行和列不是第一个的情况下判断是否为空
+                            flag++;
+                            alert("请将数据填写完整");
+                            return false;
+                        }
+                        tableTr.append("<td>"+$(this).text()+"</td>");
+                    })
+
+                })
+                if(flag>0){
+                    return false;
+                }
+                //赋值到表上
+                $(this).siblings(".myTable").children("tbody").append(tableTr);
+                //移除掉文本
+                addTableDom.find(".addDataTd").empty();
+                addTableDom.find(".addDataTd").eq(0).append("<span style='color: grey'>填上时间</span>");
+                alert("添加成功，请保存");
+            })
+            //重置数据
+            $(document).on("click",".resetDataBtn",function (){
+                var addTableDom=$(this).siblings(".addDataTable");
+                addTableDom.find(".addDataTd").empty();
+                addTableDom.find(".addDataTd").eq(0).append("<span style='color: grey'>填上时间</span>");
+            })
+            //删除已经存在的表
+            $(document).on("click",".deleteDataTable",function () {
+                if(window.confirm("您确定要删除整个数据？（该操作不可恢复,数据会永久丢失）")){
+                    $(this).parent("div").remove();
+                    $.ajax({
+                        url:"/disaster/deleteDisData/"+$(this).siblings(".myTable").attr("tableid"),
+                        type:"delete",
+                        success:function (result) {
+                            if(result.code==200){
+                                alert("删除成功！")
+                                initData();
+                            }
+                        }
+                    })
+                }
+            })
+            //删除新建立的表
+            $(document).on("click",".deleteThisTable",function (){
+                if(window.confirm("确定要删除表格")){
+                    $(this).parent().remove();
+                }
+            });
+
+            $(".myLi").click(function () {
+                $(".myLi").removeClass("active");
+                $(this).addClass("active");
+                var index=$(".myLi").index(this);
+                $(".tab-pane").removeClass("active");
+                $(".tab-pane").eq(index).addClass("active");
+                window.scrollTo(0,$(".header").height()+$(".content-wrap").eq(0).height()+$(".nav-tabs").height()-20);
+
+            });
+
+            $(document).on("click", ".on-off", function () {
+                var border = $(".back").outerWidth() - $(".back").innerWidth();
+                if ($(".front").position().left != 0) {
+                    $(".front").css("left", 0);
+                    $(".back").css("background-color", "lightgreen");
+                    $(".back b").text("可视化界面");
+                    $(".addDataDiv").hide();
+                    $(".showDataDiv").show();
+
+                } else {
+                    $(".front").css("left", 87);
+                    $(".back").css("background-color", "lightcoral");
+                    $(".back b").text("数据界面");
+                    $(".addDataDiv").show();
+                    $(".showDataDiv").hide();
+                }
+
+            });
+
+
+        });
+
+    </script>
+</head>
+<body>
+<div th:replace="model::loginModel"></div>
+<div th:replace="model::loginModelByPhone"></div>
+<div th:replace="model::regModel"></div>
+<div th:replace="model::forgetModel"></div>
+<div th:replace="model::copyTop"></div>
+<section class="container">
+    <div class="content-wrap" style="min-height: 200px;text-align: center">
+        <div id="imageDiv">
+            <div class='left_div'>
+                <h1 th:inline="text" style="color: transparent;background-color : black;text-shadow : rgba(255,255,255,0.5) 0 5px 6px, rgba(255,255,255,0.2) 1px 3px 3px;-webkit-background-clip : text;">[[${disaster.name}]]<span th:text="${disaster.type}" style="color: red;font-size: 14px;margin-left: 20px"></span></h1 >
+                <h5 th:text="灾情简介： + ${disaster.sysnopsis}" style="color: grey"></h5 >
+                <h5 th:text="发生时间： +${disaster.time}"></h5 >
+                <h5 th:text="灾情地点： +${disaster.address}" style="margin-top: 0px"></h5 >
+                <div style="margin-left:30px;width:200px;background-color: rgba(9,148,167,.5);border-radius: .71875rem;font-size: 1rem;"><h6 th:text="截止目前共 +${disaster.hot}+ 人次已浏览" style="padding-left: 5px"></h6 ></div>
+            </div>
+            <div class='right_div'>
+                <img  th:src='@{${disaster.photo}}'  style='background-position: right;height: 200px;width: 100%'/>
+            </div>
+        </div>
+        <div class="disabledInfoDiv">
+            <div class="switchModel">
+                <div th:if="${session.userinfo!=null && session.userinfo.role.roleid>3 && session.userinfo.userid == disaster.userid}" class="on-off">
+                    <div class="back2"></div>
+                    <div class="back">
+                        <div style="position: relative;top: -3px"><b style="z-index: 9999;position: relative;">可视化界面</b>
+                        </div>
+                    </div>
+                    <div class="front"></div>
+                </div>
+            </div>
+
+            <div class="addDataDiv" style="display: none;width: 100%;height: 100%">
+                <button id="addDataBtn">加入数据</button>
+                <div class="modal fade" id="modalTable" style="width: 300px;min-height: 200px;padding: 0px;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title" id="myModalLabel">创建表格</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div style="padding-left: 20px;text-align: left"><label>表格名称：</label><input name="tableName" type="text" style="width: 100px"></div>
+                            <div style="padding-left: 20px;text-align: left;margin-top: 10px"><input name="row" type="text" style="width: 50px;">&nbsp;&nbsp;<label>行</label><input name="col" type="text" style="width: 50px;"><label>列</label></div>
+                            <div style="padding-left: 20px;text-align: left" id="tableTips"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                            <button type="button" class="btn btn-primary" id="addTable">确定</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div>
+                <div id="dataTableTestDiv" style="text-align: center"></div>
+                <div id="echatsTest" style="width: 600px;height:400px;"></div>
+                <div id="dataTableDiv"></div>
+            </div>
+            <div class="showDataDiv">
+
+            </div>
+        </div>
+    </div>
+    <div class="content-wrap">
+        <div class="widget widget-tabs" style="height: auto">
+            <div id="loop1">
+                <ul class="nav nav-tabs" role="tablist" style="clear: both;display: block">
+                    <li role="presentation" class="myLi active"><a href="#loop1" aria-controls="notice" role="tab"
+                                                                   data-toggle="tab">最新新闻</a></li>
+                    <li role="presentation" class="myLi"><a href="#loop1" aria-controls="contact" role="tab"
+                                                            data-toggle="tab">在线捐赠</a></li>
+                    <li role="presentation" class="myLi"><a href="#loop1" aria-controls="contact" role="tab"
+                                                            data-toggle="tab">医疗求助</a></li>
+                    <li role="presentation" class="myLi"><a href="#loop1" aria-controls="contact" role="tab"
+                                                            data-toggle="tab">人员管理</a></li>
+                    <li role="presentation" class="myLi"><a href="#loop1" aria-controls="contact" role="tab"
+                                                            data-toggle="tab">其他</a></li>
+                </ul>
+            </div>
+
+            <div class="tab-content" style="padding-top: 0">
+                <div role="tabpanel" class="tab-pane contact active" id="notice">
+
+                </div>
+                <div role="tabpanel" class="tab-pane contact" id="contact">
+                    <aside style="float: right;z-index: -1">
+
+                        <div class="widget widget_hot">
+                            <h3>最新评论文章</h3>
+                            <ul>
+                                <li><a title="用DTcms做一个独立博客网站（响应式模板）" href="#"><span class="thumbnail">
+				<img class="thumb" data-original="/static/pagemould/images/201610181739277776.jpg"
+                     src="/static/pagemould/images/201610181739277776.jpg" alt="用DTcms做一个独立博客网站（响应式模板）"
+                     style="display: block;">
+			</span><span class="text">用DTcms做一个独立博客网站（响应式模板）</span><span class="muted"><i
+                                        class="glyphicon glyphicon-time"></i>
+				2016-11-01
+			</span><span class="muted"><i class="glyphicon glyphicon-eye-open"></i>88</span></a></li>
+
+
+                            </ul>
+                        </div>
+                        <div class="widget widget_sentence">
+                            <a href="#" target="_blank" rel="nofollow" title="专业网站建设">
+                                <img style="width: 100%" src="/static/pagemould/images//201610241224221511.jpg"
+                                     alt="专业网站建设"></a>
+                        </div>
+                        <div class="widget widget_sentence">
+                            <a href="#" target="_blank" rel="nofollow" title="MZ-NetBlog主题">
+                                <img style="width: 100%" src="/static/pagemould/images/ad.jpg" alt="MZ-NetBlog主题"></a>
+                        </div>
+                        <div class="widget widget_sentence">
+                            <h3>友情链接</h3>
+                            <div class="widget-sentence-link">
+                                <a href="#" title="网站建设" target="_blank">网站建设</a>&nbsp;&nbsp;&nbsp;
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+                <div role="tabpanel" class="tab-pane contact" id="1">1</div>
+                <div role="tabpanel" class="tab-pane contact" id="2">2</div>
+                <div role="tabpanel" class="tab-pane contact" id="3">3</div>
+            </div>
+        </div>
+    </div>
+
+</section>
+<div th:insert="model::copyBot"></div>
+</body>
+</html>

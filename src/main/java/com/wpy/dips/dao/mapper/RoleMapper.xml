@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wpy.dips.dao.RoleDao">
+    <select id="findRoleListByUserId" resultType="java.lang.String">
+        select r.rolename from t_role as r
+        INNER JOIN t_user_role as ur
+        on ur.roleid=r.roleid
+        where ur.userid=#{userid}
+    </select>
+    <select id="findRoleByUserId" resultType="com.wpy.dips.bean.Role">
+        SELECT r.* from t_role as r
+        LEFT JOIN t_user_role as ur
+        on r.roleid=ur.roleid
+        where userid=#{userid}
+    </select>
+    <select id="findRoleInfoByRoleId" resultType="com.wpy.dips.bean.Role">
+        select *
+        from t_role
+        where roleid=#{roleid}
+    </select>
+
+
+    <insert id="setRoleByUserId">
+        insert into t_user_role (userid,roleid) values (#{userid},#{roleid});
+    </insert>
+
+    <update id="updateRole">
+        update t_user_role
+        set roleid=#{roleid}
+        where userid=#{userid}
+    </update>
+</mapper>

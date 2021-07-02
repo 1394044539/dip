@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wpy.dips.dao.UserAuthenticationDao">
+    <!--插入-->
+    <insert id="addAu" useGeneratedKeys="true" keyProperty="UAid">
+        insert into
+        <if test="IDnumber !=null">
+            t_userAuthentication(userid,roleid,IDnumber,realname,photo,isPass) values (#{user.userid},#{role.roleid},#{IDnumber},#{realname},#{photo},#{isPass})
+        </if>
+        <if test="institutionname != null">
+            t_userAuthentication(userid,roleid,institutionname,institutionphone,photo,isPass) values (#{user.userid},#{role.roleid},#{institutionname},#{institutionphone},#{photo},#{isPass})
+        </if>
+    </insert>
+
+    <!--查询-->
+    <resultMap id="findUserAuInfoMap" type="com.wpy.dips.bean.UserAuthentication">
+        <id column="uaid" property="uaid"></id>
+        <result column="realname" property="realname"></result>
+        <result column="IDnumber" property="IDnumber"></result>
+        <result column="institutionname" property="institutionname"></result>
+        <result column="institutionphone" property="institutionphone"></result>
+        <result column="photo" property="photo"></result>
+        <result column="isPass" property="isPass"></result>
+        <association property="role" javaType="com.wpy.dips.bean.Role">
+            <id column="trid" property="roleid"></id>
+            <result column="rolename" property="rolename"></result>
+        </association>
+        <association property="user" javaType="com.wpy.dips.bean.User">
+            <id column="tuid" property="userid"></id>
+            <result column="username" property="username"></result>
+        </association>
+    </resultMap>
+    <select id="findUserAuInfo" resultMap="findUserAuInfoMap">
+        SELECT tua.*,tu.userid tuid,tu.username,tr.roleid trid,tr.rolename
+        FROM t_userauthentication tua,t_user tu,t_role tr
+        where tua.userid=tu.userid and tua.roleid=tr.roleid
+        and tua.userid=#{userid} and isPass='W'
+    </select>
+    <select id="findAllAu" resultMap="findUserAuInfoMap">
+        SELECT tua.*,tu.userid tuid,tu.username,tr.roleid trid,tr.rolename
+        FROM t_userauthentication tua,t_user tu,t_role tr
+        where tua.userid=tu.userid and tua.roleid=tr.roleid
+        and tua.isPass=#{isPass}
+    </select>
+
+    <!--修改-->
+    <update id="updataIsPass">
+        update t_userauthentication
+        set isPass=#{isPass}
+        where userid=#{userid} and roleid={#roleid}
+    </update>
+</mapper>

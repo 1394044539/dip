@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wpy.dips.dao.UserDao">
+    <select id="findUserByName" resultType="com.wpy.dips.bean.User">
+        select * from t_user where username=#{username}
+    </select>
+    <select id="findUserByUserId" resultType="com.wpy.dips.bean.User">
+        select * from t_user where userid=#{userid}
+    </select>
+    <select id="findUserByPhone" resultType="com.wpy.dips.bean.User">
+        select * from t_user where phone=#{phone}
+    </select>
+    <select id="findAllUser" resultMap="findAllUserMap">
+        select u.*,r.roleid,r.rolename
+        from t_user_role as ur,t_user as u,t_role as r
+        where ur.userid=u.userid
+        and ur.roleid=r.roleid
+    </select>
+    <!--映射-->
+    <resultMap id="findAllUserMap" type="com.wpy.dips.bean.User">
+        <id column="userid" property="userid"></id>
+        <result column="username" property="username"></result>
+        <result column="virtualname" property="virtualname"></result>
+        <result column="password" property="password"></result>
+        <result column="photo" property="photo"></result>
+        <result column="phone" property="phone"></result>
+        <result column="realname" property="realname"></result>
+        <association property="role" javaType="com.wpy.dips.bean.Role">
+            <id column="roleid" property="roleid"></id>
+            <result column="rolename" property="rolename"></result>
+        </association>
+    </resultMap>
+    <!--插入-->
+    <insert id="addUser" useGeneratedKeys="true" keyProperty="userid">
+        insert into t_user(username,password,phone) values (#{username},#{password},#{phone})
+    </insert>
+
+    <update id="updatePassword">
+        update t_user
+        set password=#{password}
+        where userid=#{userid}
+    </update>
+</mapper>

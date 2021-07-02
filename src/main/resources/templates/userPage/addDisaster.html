@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/bootstrap.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/nprogress.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/style.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/pagemould/css/font-awesome.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/static/otherStatic/layui/css/layui.css}">
+    <style type="text/css">
+        div.chuans{
+            position:relative;
+            width:240px;
+            height:160px;
+            border-radius: 3px;
+            border:1px dashed #ccc;
+            margin-right: 44px;
+            overflow: hidden;
+        }
+        div.chuans img{
+            position:absolute;
+            max-width:238px;
+            left:0;
+            right:0;
+            top:0;
+            bottom:0;
+            margin:auto;
+        }
+        input.uploadImg{
+            cursor: pointer;
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            z-index: 999;
+        }
+    </style>
+
+    <script th:src="@{/static/otherStatic/jquery/jquery-3.4.1.min.js}"></script>
+    <script th:src="@{/static/otherStatic/layui/layui.js}"></script>
+    <script th:src="@{/static/otherStatic/pagemould/js/bootstrap.min.js}"></script>
+    <script>
+        $(function () {
+            $("#confirmCommit").click(function () {
+                var data=getFormData();
+                $.ajax({
+                    type:"post",
+                    url:"/disaster/addDisaster",
+                    data:data,
+                    //dataType: 'json', //返回值类型 一般设置为json
+                    contentType: false,
+                    processData: false,  // jQuery不要去处理发送的数据
+                    success:function(result){
+                        if(result.code==200){
+                            alert("添加成功!");
+                            window.location.href="/disaster/jumpDisasterInfo/"+result.data.id;
+                        }
+                    },error:function(){
+                        console.log("后台处理错误");
+                    }
+                });
+                return false;
+            });
+            //获取表单信息
+            function getFormData(){
+                var formData = new FormData();
+                var ojson = {};
+                ojson.name =$.trim( $("input[name=name]").val());
+                ojson.sysnopsis =$.trim( $("textarea[name=sysnopsis]").val());
+                ojson.time=$("input[name=time]").val();
+                ojson.type=$("select[name=type]").val();
+                ojson.address=$("#country").val()+$("#province").val()+$("#city").val();
+                ojson.photo = $("input[name=photo]").get(0).files[0];
+                //ojson.photo =document.querySelector("input.photo").files[0];
+
+                formData.append('name', ojson.name);
+                formData.append('time', ojson.time);
+                formData.append('type', ojson.type);
+                formData.append('address',ojson.address);
+                formData.append('sysnopsis', ojson.sysnopsis);
+                formData.append('photo', ojson.photo);
+
+                return formData;
+            }
+
+            //展示图片
+            $("input.uploadImg").change(function () {
+                var reads = new FileReader();
+                var f = $(this).get(0).files[0];
+                var rep = /jpeg|png|gif|bmp/ig;
+                var gstyle = f.type.split("/")[1];
+                if(rep.test(gstyle)){
+                    reads.readAsDataURL(f);
+                    var that = this;
+                    reads.onload = function(e) {
+                        $(that).parent().find("img").attr("src",this.result)
+                    };
+                }else{
+                    layer.msg("图片格式不正确，请上传 jpeg|png|gif|bmp 格式的图片")
+                }
+
+                return false;
+            });
+
+
+        });
+    </script>
+    <title>添加灾情</title>
+</head>
+<body>
+<div th:insert="model::copyTop"></div>
+<section class="container">
+    <div class="content-wrap">
+            <article class="excerpt-minic excerpt-minic-index">
+                <h1 style="text-align: center">发布灾情</h1>
+                <h4 style="text-align: center;margin-top: 30px">请确保信息真实、有效，并尽量完整填写</h4>
+                <hr>
+                <div style="margin: 0px 10%">
+                <form class="layui-form">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 120px">灾情名：</label>
+                        <div class="layui-input-inline" style="width: 500px">
+                            <input type="text" name="name" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 120px">灾情类型：</label>
+                        <div class="layui-input-inline" style="width: 500px">
+                        <select lay-verify="required" name="type" data-edit-select="1" onmousedown="if(this.options.length>3){this.size=8}" onblur="this.size=0" onchange="this.size=0" style="position:absolute;z-index:1;">
+                            <option selected="selected" value="其他">其他</option>
+                            <option value="海啸">海啸</option>
+                            <option value="地震">地震</option>
+                            <option value="台风">台风</option>
+                            <option value="洪水">洪水</option>
+                            <option value="冰雹">冰雹</option>
+                            <option value="大雪">大雪</option>
+                            <option value="干旱">干旱</option>
+                            <option value="禽流感">禽流感</option>
+                            <option value="疫情">疫情</option>
+                            <option value="火灾">火灾</option>
+                        </select>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 120px">灾情简介：</label>
+                        <div class="layui-input-inline" style="width: 500px">
+                            <textarea name="sysnopsis" placeholder="请输入内容" class="layui-textarea"></textarea>
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 120px">时间：</label>
+                        <div class="layui-input-inline" style="width: 500px">
+                        <input type="date" name="time" class="layui-input" id="timeInput">
+                        </div>
+                    </div>
+                    <div th:replace="model::copyCityChose"></div>
+                    <br>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 120px">上传图片：</label>
+                        <div class="chuans">
+                            <img src="/static/myStatic/img/IDPhoto.png" alt="" data-imgsrc="/static/myStatic/img/IDPhoto.png">
+                            <input class="uploadImg file1" type="file" name="photo"  >
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="width: 120px"></label>
+                        <div class="layui-input-inline" style="width: 500px">
+                        <button id="confirmCommit" class="layui-btn">下一步</button>
+                        </div>
+                    </div>
+
+                </form>
+                </div>
+            </article>
+    </div>
+</section>
+<div th:insert="model::copyBot"></div>
+<script>
+    layui.use('form', function(){
+        var form = layui.form;
+
+        //各种基于事件的操作，下面会有进一步介绍
+    });
+</script>
+</body>
+</html>
